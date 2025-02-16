@@ -12,7 +12,7 @@ WINDOW_SIZE = (W, H)
 pygame.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(WINDOW_SIZE) 
-##display = pygame.Surface((HW, HH))
+display = pygame.Surface((W, H))
 pygame.display.set_caption('RL Pygame Platform Game')
 
 # FUNCTIONS -------------------------------------------------------
@@ -63,15 +63,15 @@ class player:
                 self.jumping = False
 
     def move(self):
-        if self.moving_right == True and self.collision_types.right == False:
+        if self.moving_right == True and self.collision_types["right"] == False and self.player_movement[0] <= 2:
             self.player_movement[0] += 2
-        if self.moving_left == True and self.collision_types.left == False:
+        if self.moving_left == True and self.collision_types["left"] == False and self.player_movement[0] >= -2:
             self.player_movement[0] -= 2
         if self.collision_types['bottom'] == True:
             self.air_timer = 0
             self.vertical_momentum = 0
-        else:
-            self.air_timer += 1
+        #else:
+         #   self.air_timer += 1
     
     def collisions(self,rect,tiles):
         rect.x += self.player_movement[0]
@@ -92,20 +92,34 @@ class player:
             elif self.player_movement[1] < 0:
                 rect.top = tile.bottom
                 self.collision_types['top'] = True
-        return rect, self.collision_types
+        return rect
 
     def draw(self):
         self.player_rect = pygame.Rect(self.x,self.y,self.width,self.height)
+        return self.player_rect
 
 # MAIN ------------------------------------------------------------
-#game loop
-while True: 
-    pygame.display.update()
-    clock.tick(60)
+player_one = player(100,100,21,24)
+player_rect = player_one.draw()
 
+#game loop
+while True:
+    display.fill((0,0,0))
+    
+    pygame.draw.rect(display,(255,56,6),player_rect)
+    pygame.display.flip()
+
+    player_rect = player_one.collisions(player_rect, [])
+    player_one.move()
+    
     for event in pygame.event.get(): 
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+        player_one.keys()
     
+    screen.blit(pygame.transform.scale(display,WINDOW_SIZE),(0,0))
+    pygame.display.update()
+
+    clock.tick(60)
 
