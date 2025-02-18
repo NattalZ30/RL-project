@@ -54,6 +54,7 @@ class player:
                 self.moving_left = True
             if event.key == K_UP or event.key == K_SPACE:
                 self.jumping = True
+                
         if event.type == KEYUP:
             if event.key == K_RIGHT:
                 self.moving_right = False
@@ -63,15 +64,28 @@ class player:
                 self.jumping = False
 
     def move(self):
-        if self.moving_right == True and self.collision_types["right"] == False and self.player_movement[0] <= 2:
-            self.player_movement[0] += 2
-        if self.moving_left == True and self.collision_types["left"] == False and self.player_movement[0] >= -2:
-            self.player_movement[0] -= 2
-        if self.collision_types['bottom'] == True:
+        if self.moving_right and not self.collision_types["right"]:
+            self.player_movement[0] = min(self.player_movement[0] + 2, 2)
+        elif self.moving_left and not self.collision_types["left"]:
+            self.player_movement[0] = max(self.player_movement[0] - 2, -2)
+        else:
+            self.player_movement[0] = 0
+        
+        if self.collision_types['bottom'] and not self.jumping:
             self.air_timer = 0
             self.vertical_momentum = 0
-        #else:
-         #   self.air_timer += 1
+        else:
+            if self.jumping and self.air_timer == 0:
+                self.air_timer += 1
+                self.player_movement[1] = -8
+                self.collision_types["bottom"] = False
+            elif self.air_timer != 0:
+                self.player_movement[1] += 0.2
+                if self.player_movement[1] > 5:
+                    self.player_movement[1] = 5
+                if self.collision_types["bottom"]:
+                    self.player_movement[1] = 5-5
+        
     
     def collisions(self,rect,tiles):
         rect.x += self.player_movement[0]
@@ -99,17 +113,20 @@ class player:
         return self.player_rect
 
 # MAIN ------------------------------------------------------------
-player_one = player(100,100,21,24)
+player_one = player(0,176,21,24)
 player_rect = player_one.draw()
-
+floor = pygame.Rect(0,200,100,50)
+layer = pygame.Rect(0,300,600,400)
 #game loop
 while True:
-    display.fill((0,0,0))
+    display.fill((146,244,255))
     
-    pygame.draw.rect(display,(255,56,6),player_rect)
+    pygame.draw.rect(display,(0,0,0),player_rect)
+    pygame.draw.rect(display,(105,200,106),floor)
+    pygame.draw.rect(display,(135,90,86),layer)
     pygame.display.flip()
 
-    player_rect = player_one.collisions(player_rect, [])
+    player_rect = player_one.collisions(player_rect, [floor, layer])
     player_one.move()
     
     for event in pygame.event.get(): 
