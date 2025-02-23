@@ -42,7 +42,6 @@ class player:
         self.moving_left = False
         self.moving_right = False
         self.air_timer = 0
-        self.vertical_momentum = 0
         self.jumping = False
         self.collision_types = {'top':False,'bottom':False,'right':False,'left':False}
 
@@ -71,23 +70,21 @@ class player:
         else:
             self.player_movement[0] = 0
         
+        self.air_timer += 1
+        if self.air_timer != 0 or not self.collision_types["bottom"] :
+            self.player_movement[1] += 0.2
+            if self.player_movement[1] > 5:
+                self.player_movement[1] = 5  
+        
         if self.collision_types['bottom'] and not self.jumping:
             self.air_timer = 0
-            self.vertical_momentum = 0
-        else:
-            if self.jumping and self.air_timer == 0:
-                self.air_timer += 1
-                self.player_movement[1] = -8
-                self.collision_types["bottom"] = False
-            elif self.air_timer != 0:
-                self.player_movement[1] += 0.2
-                if self.player_movement[1] > 5:
-                    self.player_movement[1] = 5
-                if self.collision_types["bottom"]:
-                    self.player_movement[1] = 5-5
-        
-    
+            self.player_movement[1] = 0
+        elif self.jumping and self.collision_types['bottom']:
+            self.player_movement[1] = -8
+            self.collision_types["bottom"] = False
+            
     def collisions(self,rect,tiles):
+        self.collision_types = {'top':False,'bottom':False,'right':False,'left':False}
         rect.x += self.player_movement[0]
         hit_list = collision_test(rect,tiles)
         for tile in hit_list:
@@ -113,9 +110,10 @@ class player:
         return self.player_rect
 
 # MAIN ------------------------------------------------------------
-player_one = player(0,176,21,24)
+player_one = player(0,100,21,24)
 player_rect = player_one.draw()
 floor = pygame.Rect(0,200,100,50)
+floor2 = pygame.Rect(500,200,100,50)
 layer = pygame.Rect(0,300,600,400)
 #game loop
 while True:
@@ -123,12 +121,13 @@ while True:
     
     pygame.draw.rect(display,(0,0,0),player_rect)
     pygame.draw.rect(display,(105,200,106),floor)
+    pygame.draw.rect(display,(105,200,106),floor2)
     pygame.draw.rect(display,(135,90,86),layer)
     pygame.display.flip()
 
-    player_rect = player_one.collisions(player_rect, [floor, layer])
+    player_rect = player_one.collisions(player_rect, [floor, floor2, layer])
     player_one.move()
-    
+
     for event in pygame.event.get(): 
         if event.type == QUIT:
             pygame.quit()
