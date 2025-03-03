@@ -32,12 +32,35 @@ def collision_test(rect,tiles):
     return hit_list
 
 # CLASSES -------------------------------------------------------
-class player:
-    def __init__(self, x, y, width, height):
+
+class Coin:
+    def __init__(self, x, y, width, height, colour=(210,200,10)):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.colour = colour 
+        self.collide = False
+        self.coin_rect = pygame.Rect(self.x,self.y,self.width,self.height)
+        
+    def player_collect(self, players):
+        for player in players:
+            if self.coin_rect.colliderect(player.player_rect):
+                player.score += 1
+                self.collide = True
+    
+    def draw(self):
+        pygame.draw.rect(display,self.colour,self.coin_rect)
+
+class player:
+    def __init__(self, x, y, width, height, colour=(0,0,0)):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.colour = colour
+        self.score = 0
+        self.player_rect = pygame.Rect(self.x,self.y,self.width,self.height)
         self.player_movement = [0,0]
         self.moving_left = False
         self.moving_right = False
@@ -45,21 +68,21 @@ class player:
         self.jumping = False
         self.collision_types = {'top':False,'bottom':False,'right':False,'left':False}
 
-    def keys(self):
+    def keys(self, right, left, up):
         if event.type == KEYDOWN:
-            if event.key == K_RIGHT:
+            if event.key == right:
                 self.moving_right = True
-            if event.key == K_LEFT:
+            if event.key == left:
                 self.moving_left = True
-            if event.key == K_UP or event.key == K_SPACE:
+            if event.key == up:
                 self.jumping = True
                 
         if event.type == KEYUP:
-            if event.key == K_RIGHT:
+            if event.key == right:
                 self.moving_right = False
-            if event.key == K_LEFT:
+            if event.key == left:
                 self.moving_left = False
-            if event.key == K_UP or event.key == K_SPACE:
+            if event.key == up:
                 self.jumping = False
 
     def move(self):
@@ -103,36 +126,61 @@ class player:
             elif self.player_movement[1] < 0:
                 rect.top = tile.bottom
                 self.collision_types['top'] = True
-        return rect
 
     def draw(self):
-        self.player_rect = pygame.Rect(self.x,self.y,self.width,self.height)
-        return self.player_rect
+        pygame.draw.rect(display,self.colour,self.player_rect)
 
 # MAIN ------------------------------------------------------------
 player_one = player(0,100,21,24)
-player_rect = player_one.draw()
+
+player_two = player(580,100,21,24,(100,100,100))
+
+coin = Coin(300,250,20,23)
+
 floor = pygame.Rect(0,200,100,50)
+layer2 = pygame.Rect(0,220,100,30)
+layer3 = pygame.Rect(500,220,100,30)
 floor2 = pygame.Rect(500,200,100,50)
 layer = pygame.Rect(0,300,600,400)
+grass = pygame.Rect(0,300,600,30)
 #game loop
 while True:
     display.fill((146,244,255))
     
-    pygame.draw.rect(display,(0,0,0),player_rect)
-    pygame.draw.rect(display,(105,200,106),floor)
-    pygame.draw.rect(display,(105,200,106),floor2)
+    player_one.draw()
+    player_two.draw()
+    
+    ## drawing the tiles
     pygame.draw.rect(display,(135,90,86),layer)
+    pygame.draw.rect(display,(105,200,106),grass)
+    
+    pygame.draw.rect(display,(105,200,106),floor)
+    pygame.draw.rect(display,(135,90,86),layer2)
+    
+    pygame.draw.rect(display,(105,200,106),floor2)
+    pygame.draw.rect(display,(135,90,86),layer3)
+
+    coin.draw()
+    coin.player_collect([player_one, player_two])
+    if coin.collide:
+        coin = Coin(random.randint(20, 580),random.randint(100, 277),20,23)
+        coin.draw()
+        coin.player_collect([player_one,player_two])
+
     pygame.display.flip()
 
-    player_rect = player_one.collisions(player_rect, [floor, floor2, layer])
+    player_one.collisions(player_one.player_rect, [floor, floor2, layer])
     player_one.move()
+
+    player_two.collisions(player_two.player_rect, [floor, floor2, layer])
+    player_two.move()
 
     for event in pygame.event.get(): 
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        player_one.keys()
+        player_one.keys(K_d,K_a,K_w) 
+        player_two.keys(K_RIGHT,K_LEFT,K_UP)
     
     screen.blit(pygame.transform.scale(display,WINDOW_SIZE),(0,0))
     pygame.display.update()
